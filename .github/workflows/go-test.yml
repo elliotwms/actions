@@ -6,19 +6,29 @@ on:
         default: '1.20'
         required: false
         type: string
+      docker-compose:
+        default: false
+        required: false
+        type: boolean
 jobs:
   test:
     runs-on: ubuntu-latest
     steps:
-    - uses: actions/checkout@v3
-    - name: Set up Go
-      uses: actions/setup-go@v4
-      with:
-        go-version: ${{ inputs.go-version }}
-    - name: Build
-      run: go build -v ./...
-    - name: Test
-      run: go test -v ./...
+      - uses: actions/checkout@v3
+      - name: Docker compose up
+        if: ${{ inputs.docker-compose }}
+        run: docker compose up -d
+      - name: Set up Go
+        uses: actions/setup-go@v4
+        with:
+          go-version: ${{ inputs.go-version }}
+      - name: Build
+        run: go build -v ./...
+      - name: Test
+        run: go test -v ./...
+      - name: Docker logs
+        if: ${{ inputs.docker-compose && failure() }}
+        run: docker compose logs
   lint:
     name: lint
     runs-on: ubuntu-latest
